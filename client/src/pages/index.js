@@ -1,0 +1,9 @@
+export { default as BookingPage } from "./BookingPage";
+export { default as BookingsPage } from "./BookingsPage";
+export { default as IndexPage } from "./IndexPage";
+export { default as IndexPlacePage } from "./IndexPlacePage";
+export { default as LoginPage } from "./LoginPage";
+export { default as PlacesFormPage } from "./PlacesFormPage";
+export { default as PlacesPage } from "./PlacesPage";
+export { default as ProfilePage } from "./ProfilePage";
+export { default as RegisterPage } from "./RegisterPage";

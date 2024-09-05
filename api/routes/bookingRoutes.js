@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const Booking = require('../models/booking.js');
 const router = express.Router();
+const mongoose = require('mongoose');
 
 const jwtSecret = "fbvvvwevtntn";
 
@@ -16,6 +17,7 @@ function getUserDataFromReq(req) {
 
 // Route: /bookings (POST)
 router.post("/bookings", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
     const userData = await getUserDataFromReq(req);
     const { place, checkIn, checkOut, name, phone, price } = req.body;
     Booking.create({
@@ -37,6 +39,7 @@ router.post("/bookings", async (req, res) => {
 
 // Route: /bookings (GET)
 router.get("/bookings", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
     const userData = await getUserDataFromReq(req);
     res.json(await Booking.find({ user: userData.id }).populate("place"));
   });

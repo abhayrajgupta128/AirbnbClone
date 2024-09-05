@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { default: mongoose } = require("mongoose");
 const router = express.Router();
 
 const jwtSecret = "fbvvvwevtntn";
@@ -9,6 +10,7 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 
 // Route: /register
 router.post("/register", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { name, email, password } = req.body;
   try {
     const userDoc = await User.create({
@@ -27,6 +29,7 @@ router.post("/register", async (req, res) => {
 
 // Route: /login
 router.post("/login", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { email, password } = req.body;
   const userDoc = await User.findOne({ email });
   if (userDoc) {

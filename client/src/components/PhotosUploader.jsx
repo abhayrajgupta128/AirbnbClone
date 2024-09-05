@@ -1,18 +1,25 @@
 import React, { useState } from "react";
 import axios from "axios";
+import Image from "./Image";
 
 const PhotosUploader = ({ addedPhotos, onChange }) => {
   const [photoLink, setPhotoLink] = useState("");
 
+
   async function addPhotoByLink(ev) {
     ev.preventDefault();
-    const { data: filename } = await axios.post("/place/upload-by-link", {
-      link: photoLink,
+  
+    const promise = new Promise((resolve, reject) => {
+      axios.post("/place/upload-by-link", { link: photoLink })
+        .then(({ data: { url } }) => {
+          onChange((prev) => [...prev, url]);
+          setPhotoLink("");
+          resolve();
+        })
+        .catch(() => {
+          reject();
+        });
     });
-    onChange((prev) => {
-      return [...prev, filename];
-    });
-    setPhotoLink("");
   }
 
   function uploadPhoto(ev) {
@@ -59,13 +66,9 @@ const PhotosUploader = ({ addedPhotos, onChange }) => {
 
       <div className="mt-2 grid gap-2 grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {addedPhotos.length > 0 &&
-          addedPhotos.map((link) => (
-            <div className="h-32 flex relative" key={link}>
-              <img
-                className="rounded-2xl w-full object-cover"
-                src={"http://localhost:4000/uploads/" + link}
-                alt="image"
-              />
+          addedPhotos.map((link, index) => (
+            <div className="h-32 flex relative" key={`${link}-${index}`}>
+              <Image src={link} className="rounded-2xl w-full object-cover" />
               <button
                 onClick={(ev) => removePhoto(ev, link)}
                 className="cursor-pointer absolute bottom-1 right-1 text-white bg-black bg-opacity-50 rounded-2xl py-2 px-3"

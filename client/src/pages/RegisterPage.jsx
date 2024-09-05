@@ -8,7 +8,7 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [redirect, setRedirect] = useState("");
 
-  async function resgisterUser(ev) {
+  async function registerUser(ev) {
     ev.preventDefault();
     try {
       await axios.post("/auth/register", {
@@ -31,7 +31,7 @@ const RegisterPage = () => {
     <div className="mt-4 grow flex items-center justify-around">
       <div className="mb-64">
         <h1 className="text-4xl text-center mb-4">Register</h1>
-        <form className="max-w-md mx-auto" onSubmit={resgisterUser}>
+        <form className="max-w-md mx-auto" onSubmit={registerUser}>
           <input
             type="text"
             placeholder="John Doe"

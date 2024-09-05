@@ -1,3 +1,4 @@
+
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const Place = require("../models/Place");
@@ -6,14 +7,16 @@ const uploadsDir = path.join(process.cwd(), "uploads");
 const imageDownloader = require("image-downloader");
 const multer = require("multer");
 const fs = require("fs");
-
+const mongoose = require("mongoose");
 const jwtSecret = "fbvvvwevtntn";
 const router = express.Router();
-
-const photosMiddleware = multer({ dest: "uploads/" });
+const cloudinary = require("cloudinary").v2;
+const {storage} = require("../cloudConfig");
+const photosMiddleware = multer({ storage });
 
 // Route: /places (POST)
 router.post("/places", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { token } = req.cookies;
   const {
     title,
@@ -48,11 +51,13 @@ router.post("/places", async (req, res) => {
 
 // Route: /places (GET)
 router.get("/places", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   res.json(await Place.find());
 });
 
 // Route: /user-places (GET)
 router.get("/user-places", (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { token } = req.cookies;
   jwt.verify(token, jwtSecret, {}, async (err, userData) => {
     if (err) throw err;
@@ -63,12 +68,14 @@ router.get("/user-places", (req, res) => {
 
 // Route: /places/:id (GET)
 router.get("/places/:id", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { id } = req.params;
   res.json(await Place.findById(id));
 });
 
 // Route: /places (PUT)
 router.put("/places", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { token } = req.cookies;
   const {
     id,
@@ -107,32 +114,37 @@ router.put("/places", async (req, res) => {
 
 // // Route: /upload-by-link (POST)
 router.post("/upload-by-link", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { link } = req.body;
   const newName = "photo" + Date.now() + ".jpg";
+  const localPath = __dirname + "/../uploads/" + newName;
   try {
     await imageDownloader.image({
       url: link,
-      dest: path.join(uploadsDir, newName), // Use the uploads directory
+      dest: localPath,
     });
-    res.json(newName);
+
+    // Upload the image to Cloudinary
+    const result = await cloudinary.uploader.upload(localPath, {
+      public_id: `airbnb/${newName}`,
+      use_filename: true,
+      unique_filename: false,
+      overwrite: true,
+    });
+
+    // Delete the local file after uploading
+    fs.unlinkSync(localPath);
+    res.status(201).json({ url: result.secure_url });
   } catch (error) {
-    console.error("Error downloading image:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error uploading image:", error);
+    res.status(500).json({ error: "Image upload failed" });
   }
 });
 
 // // Route: /upload (POST)
 router.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
-  const uploadedFiles = [];
-  for (let i = 0; i < req.files.length; i++) {
-    const { path, originalname } = req.files[i];
-    const parts = originalname.split(".");
-    const ext = parts[parts.length - 1];
-    const newPath = path + "." + ext;
-    fs.renameSync(path, newPath);
-    console.log(newPath);
-    uploadedFiles.push(newPath.replace(/uploads[\\\/]/, ""));
-  }
+  mongoose.connect(process.env.MONGO_URL);
+  const uploadedFiles = req.files.map(file => file.path);
   res.json(uploadedFiles);
 });
 
